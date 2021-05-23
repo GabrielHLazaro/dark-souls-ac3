@@ -1,5 +1,6 @@
 package br.com.bandtec.gabrielac3.controller;
 
+import br.com.bandtec.gabrielac3.PilhaObj;
 import br.com.bandtec.gabrielac3.dominio.RangedClasse;
 import br.com.bandtec.gabrielac3.dominio.TipoMagia;
 import br.com.bandtec.gabrielac3.repository.RangedClasseRepository;
@@ -14,6 +15,7 @@ public class ClasseController {
 
     @Autowired
     private RangedClasseRepository repositoryClasse;
+    private PilhaObj<Integer> idRequisição;
 
     @GetMapping
     public ResponseEntity getClasses(){
@@ -28,6 +30,7 @@ public class ClasseController {
     @PostMapping
     public ResponseEntity postClasse(@RequestBody RangedClasse novaClasse){
         repositoryClasse.save(novaClasse);
+        idRequisição.push(novaClasse.getId());
         return ResponseEntity.status(201).build();
     }
 
@@ -41,10 +44,10 @@ public class ClasseController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity deleteClasse(@PathVariable int id){
-        if(repositoryClasse.findById(id).isPresent()){
-            repositoryClasse.deleteById(id);
-            return ResponseEntity.status(200).build();
+    public ResponseEntity desfazerPostClasse(){
+        if(repositoryClasse.findById(idRequisição.peek()).isPresent()){
+            repositoryClasse.deleteById(idRequisição.pop());
+            return ResponseEntity.status(200).body("A ultica classe inserida foi removida!");
         }else{
             return ResponseEntity.status(404).body("Desculpe, classe não encontrada!");
         }
