@@ -15,7 +15,8 @@ public class ClasseController {
 
     @Autowired
     private RangedClasseRepository repositoryClasse;
-    private PilhaObj<Integer> idRequisição;
+    private Integer novaRequisicao = 0;
+    private PilhaObj<Integer> idRequisição = new PilhaObj<>(99);
 
     @GetMapping
     public ResponseEntity getClasses(){
@@ -30,7 +31,7 @@ public class ClasseController {
     @PostMapping
     public ResponseEntity postClasse(@RequestBody RangedClasse novaClasse){
         repositoryClasse.save(novaClasse);
-        idRequisição.push(novaClasse.getId());
+        idRequisição.push(++novaRequisicao);
         return ResponseEntity.status(201).build();
     }
 
@@ -43,13 +44,14 @@ public class ClasseController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping
     public ResponseEntity desfazerPostClasse(){
-        if(repositoryClasse.findById(idRequisição.peek()).isPresent()){
+        if(idRequisição.isEmpty()){
+            return ResponseEntity.status(404).body("Desculpe, classe não encontrada!");
+        }
+        else{
             repositoryClasse.deleteById(idRequisição.pop());
             return ResponseEntity.status(200).body("A ultica classe inserida foi removida!");
-        }else{
-            return ResponseEntity.status(404).body("Desculpe, classe não encontrada!");
         }
     }
 }

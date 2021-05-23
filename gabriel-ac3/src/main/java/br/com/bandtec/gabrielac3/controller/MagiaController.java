@@ -13,8 +13,8 @@ public class MagiaController {
 
     @Autowired
     private TipoMagiaRepository repositoryTipoMagia;
-
-    private PilhaObj<Integer> idRequisição;
+    private Integer novaRequisicao = 0;
+    private PilhaObj<Integer> idRequisição = new PilhaObj<>(99);
 
     @GetMapping
     public ResponseEntity getTipoMagia(){
@@ -29,17 +29,18 @@ public class MagiaController {
     @PostMapping
     public ResponseEntity postTipoMagia(@RequestBody TipoMagia novoTipo){
         repositoryTipoMagia.save(novoTipo);
-        idRequisição.push(novoTipo.getId());
+        idRequisição.push(++novaRequisicao);
         return ResponseEntity.status(201).build();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity deleteTipoMagia(@PathVariable int id){
-        if(repositoryTipoMagia.findById(idRequisição.peek()).isPresent()){
+    @DeleteMapping
+    public ResponseEntity deleteTipoMagia(){
+        if(idRequisição.isEmpty()){
+            return ResponseEntity.status(404).body("Desculpe, tipo de magia não encontrado!");
+        }
+        else{
             repositoryTipoMagia.deleteById(idRequisição.pop());
             return ResponseEntity.status(200).body("O ultimo tipo de magia inserido foi removido!");
-        }else{
-            return ResponseEntity.status(404).body("Desculpe, tipo de magia não encontrado!");
         }
     }
 }
