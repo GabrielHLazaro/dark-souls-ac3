@@ -4,14 +4,25 @@ import br.com.bandtec.gabrielac3.FilaObj;
 import br.com.bandtec.gabrielac3.PilhaObj;
 import br.com.bandtec.gabrielac3.dominio.GetAssincrono;
 import br.com.bandtec.gabrielac3.dominio.RangedClasse;
+import br.com.bandtec.gabrielac3.dominio.ResultadoRequisicao;
 import br.com.bandtec.gabrielac3.dominio.TipoMagia;
 import br.com.bandtec.gabrielac3.repository.RangedClasseRepository;
 import br.com.bandtec.gabrielac3.repository.TipoMagiaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.ManyToOne;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.PositiveOrZero;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/classes")
@@ -19,9 +30,15 @@ public class ClasseController {
 
     @Autowired
     private RangedClasseRepository repositoryClasse;
+
     private PilhaObj<RangedClasse> ultimoPost = new PilhaObj<>(99);
-    private PilhaObj<RangedClasse> alteracaoClasse = new PilhaObj<>(99);
+
+    private PilhaObj<RangedClasse> ultimaAlteracao = new PilhaObj<>(99);
+
     private FilaObj<GetAssincrono> requisicoesAssincronas = new FilaObj(99);
+
+    private List<ResultadoRequisicao> requisicoesTratadas = new ArrayList();
+
     private int protocolo = 0;
 
     @GetMapping
@@ -46,8 +63,8 @@ public class ClasseController {
         if(repositoryClasse.findById(id).isPresent()){
             GetAssincrono novaRequisicao = new GetAssincrono(++protocolo, id);
             requisicoesAssincronas.insert(novaRequisicao);
-        return ResponseEntity.status(200).body("Solicitação adicionada na fila! " +
-                "Use /fila para tratar as solicitações.");
+            return ResponseEntity.status(200).body("Solicitação adicionada na fila! " +
+                    "Use /fila para tratar as solicitações. O protocolo é: " + protocolo);
         }else {
             return ResponseEntity.status(204).build();
         }
@@ -55,12 +72,24 @@ public class ClasseController {
 
     @GetMapping("/fila")
     public ResponseEntity tratarClasseAssincrona(){
-        if(protocolo > 0){
-            return ResponseEntity.status(200).body(repositoryClasse.findById(requisicoesAssincronas.poll().getIdClasse()));
+        if(!requisicoesAssincronas.isEmpty()){
+            ResultadoRequisicao resultado = new ResultadoRequisicao(
+                    requisicoesAssincronas.peek().getProtocolo(),
+                    repositoryClasse.findById(requisicoesAssincronas.peek().getIdClasse()));
+            requisicoesTratadas.add(resultado);
+            repositoryClasse.findById(requisicoesAssincronas.poll().getIdClasse());
+            return ResponseEntity.status(200).body("Solicitação " + resultado.getProtocolo() +
+                    " foi tratada");
         }
         else {
             return ResponseEntity.status(204).body("Não existem solicitações na fila!");
         }
+    }
+
+    @GetMapping("/verificar-solicitacao/{id}")
+    public ResponseEntity devolverTratamentoAssincrono(@PathVariable Integer id){
+        return ResponseEntity.status(200).body(requisicoesTratadas.stream().filter(resultadoRequisicao ->
+                resultadoRequisicao.getProtocolo().equals(id)).collect(Collectors.toList()));
     }
 
     @DeleteMapping
@@ -95,4 +124,92 @@ public class ClasseController {
 //    public ResponseEntity desfazerPutClasse(){
 //
 //    }
+
+    @PostMapping("/importar-classe")
+    public ResponseEntity importarClasse(@RequestParam MultipartFile arquivo) throws IOException {
+        BufferedReader entrada = null;
+        String registro;
+        String tipoRegistro;
+        String nome;
+        Integer conhecimento;
+        Integer inteligencia;
+        Integer fe;
+        String canalizador;
+        Integer tipo;
+        Double soulLevel;
+        int contRegistro = 0;
+        if(arquivo.isEmpty()){
+            return ResponseEntity.badRequest().body("Arquivo não enviado!");
+        }
+        try {
+            entrada = new BufferedReader(new FileReader(arquivo.getOriginalFilename()));
+        } catch (IOException e) {
+            System.err.printf("Erro na abertura do arquivo: %s.\n", e.getMessage());
+            ResponseEntity.status(400).body("Erro ao abrir arquivo!");
+        }
+        try {
+            registro = entrada.readLine();
+
+            while (registro != null) {
+                tipoRegistro = registro.substring(0, 2);
+                if (tipoRegistro.equals("00")) {
+                    System.out.println("Header");
+                    System.out.println("Tipo de arquivo: " + registro.substring(2, 8));
+                    System.out.println("Ra do aluno: " + registro.substring(8, 16));
+                    System.out.println("Data/hora de geração do arquivo: " + registro.substring(16,35));
+                    System.out.println("Versão do layout: " + registro.substring(35,37));
+                }
+                else if (tipoRegistro.equals("01")) {
+                    System.out.println("\nTrailer");
+                    int qtdRegistro = Integer.parseInt(registro.substring(2,7));
+                    if (qtdRegistro == contRegistro) {
+                        System.out.println("Quantidade de registros gravados compatível com quantidade lida");
+                    }
+                    else {
+                        System.out.println("Quantidade de registros gravados não confere com quantidade lida");
+                    }
+                }
+                else if (tipoRegistro.equals("02")) {
+                    if (contRegistro == 0) {
+                        System.out.println();
+                        System.out.printf("%10s %12s %12s %3s %17s %13s %10s\n", "NOME",
+                                "CONHECIMENTO", "INTELIGÊNCIA", "FÉ", "CANALIZADOR", "TIPO DE MAGIA", "SOUL LEVEL");
+
+                    }
+                    RangedClasse novaClasse = new RangedClasse();
+                    nome = registro.substring(2,12).trim();
+                    conhecimento = Integer.parseInt(registro.substring(12, 15));
+                    inteligencia = Integer.parseInt(registro.substring(15, 18));
+                    fe = Integer.parseInt(registro.substring(18, 21));
+                    canalizador = registro.substring(21, 38).trim();
+                    tipo = Integer.parseInt(registro.substring(38,41));
+                    soulLevel = Double.parseDouble(registro.substring(41, 48)
+                            .replace(',','.'));
+                    System.out.printf("%10s %13d %13d %3d %17s %13d %10.2f\n", nome, conhecimento,
+                            inteligencia, fe, canalizador, tipo, soulLevel);
+                    novaClasse.setNome(nome);
+                    novaClasse.setConhecimento(conhecimento);
+                    novaClasse.setInteligencia(inteligencia);
+                    novaClasse.setFe(fe);
+                    novaClasse.setCanalizador(canalizador);
+//                    novaClasse.setTipoMagia();
+                    novaClasse.setSoulLevel(soulLevel);
+                    contRegistro++;
+                    repositoryClasse.save(novaClasse);
+                }
+                else if (tipoRegistro.equals("03")){
+                    contRegistro++;
+                }
+                else {
+                    System.out.println("Tipo de registro inválido");
+                }
+                registro = entrada.readLine();
+            }
+            entrada.close();
+        } catch (IOException e) {
+            System.err.printf("Erro ao ler arquivo: %s.\n", e.getMessage());
+            ResponseEntity.status(400).body("Erro ao ler arquivo");
+        }
+        return ResponseEntity.created(null).build();
+    }
 }
