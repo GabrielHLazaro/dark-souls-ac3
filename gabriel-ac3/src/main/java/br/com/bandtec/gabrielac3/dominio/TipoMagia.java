@@ -14,6 +14,8 @@ public class TipoMagia {
     @Column
     private String nome;
 
+    public Integer getId() { return id; }
+
     public void setId(Integer id) {
         this.id = id;
     }
@@ -24,5 +26,10 @@ public class TipoMagia {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    @Override
+    public String toString() {
+        return "nome: " + nome;
     }
 }

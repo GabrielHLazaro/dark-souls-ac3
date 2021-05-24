@@ -1,0 +1,8 @@
+00CLASSE0120111917-05-2021 22:52:5401
+03piromancia
+03magia branca
+03magia negra
+02Mago azul 035050000cajado           0020075,00
+02Mago negro035040040cajado sombrio   0030115,00
+02Piromante 040010010chama            0010060,00
+01006

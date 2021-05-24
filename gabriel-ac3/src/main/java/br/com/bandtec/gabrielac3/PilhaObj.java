@@ -1,4 +1,5 @@
 package br.com.bandtec.gabrielac3;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class PilhaObj <T> {
