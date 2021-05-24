@@ -3,6 +3,7 @@ package br.com.bandtec.gabrielac3.dominio;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.PositiveOrZero;
+import javax.validation.constraints.Size;
 
 @Entity
 public class RangedClasse {
@@ -12,18 +13,23 @@ public class RangedClasse {
     private Integer id;
 
     @NotBlank
+    @Column(length = 10)
     private String nome;
 
     @PositiveOrZero
+    @Size(max = 99)
     private Integer conhecimento;
 
     @PositiveOrZero
+    @Size(max = 99)
     private Integer inteligencia;
 
     @PositiveOrZero
+    @Size(max = 99)
     private Integer fe;
 
     @NotBlank
+    @Column(length = 17)
     private String canalizador;
 
     @ManyToOne

@@ -11,7 +11,7 @@ public class TipoMagia {
     private Integer id;
 
     @NotBlank
-    @Column
+    @Column(length = 20)
     private String nome;
 
     public Integer getId() { return id; }
