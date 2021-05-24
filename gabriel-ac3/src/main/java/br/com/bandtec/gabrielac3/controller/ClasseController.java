@@ -7,6 +7,7 @@ import br.com.bandtec.gabrielac3.dominio.RangedClasse;
 import br.com.bandtec.gabrielac3.dominio.ResultadoRequisicao;
 import br.com.bandtec.gabrielac3.dominio.TipoMagia;
 import br.com.bandtec.gabrielac3.repository.RangedClasseRepository;
+import br.com.bandtec.gabrielac3.repository.TipoMagiaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,9 @@ public class ClasseController {
 
     @Autowired
     private RangedClasseRepository repositoryClasse;
+
+    @Autowired
+    private TipoMagiaRepository repositoryTipo;
 
     private PilhaObj<RangedClasse> ultimoPost = new PilhaObj<>(99);
 
@@ -196,7 +200,7 @@ public class ClasseController {
                     novaClasse.setInteligencia(inteligencia);
                     novaClasse.setFe(fe);
                     novaClasse.setCanalizador(canalizador);
-//                    novaClasse.setTipoMagia();
+                    novaClasse.setTipoMagia(repositoryTipo.getById(tipo));
                     novaClasse.setSoulLevel(soulLevel);
                     contRegistro++;
                     repositoryClasse.save(novaClasse);
