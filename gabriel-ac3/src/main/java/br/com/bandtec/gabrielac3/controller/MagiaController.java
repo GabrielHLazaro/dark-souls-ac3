@@ -4,11 +4,16 @@ import br.com.bandtec.gabrielac3.FilaObj;
 import br.com.bandtec.gabrielac3.PilhaObj;
 import br.com.bandtec.gabrielac3.dominio.GetAssincrono;
 import br.com.bandtec.gabrielac3.dominio.RangedClasse;
+import br.com.bandtec.gabrielac3.dominio.ResultadoRequisicao;
 import br.com.bandtec.gabrielac3.dominio.TipoMagia;
 import br.com.bandtec.gabrielac3.repository.TipoMagiaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/tipos-magia")
@@ -21,6 +26,8 @@ public class MagiaController {
     private PilhaObj<TipoMagia> ultimaAlteracao = new PilhaObj<>(99);
 
     private FilaObj<GetAssincrono> requisicoesAssincronas = new FilaObj(99);
+
+    private List<ResultadoRequisicao> requisicoesTratadas = new ArrayList();
 
     private int protocolo = 0;
 
@@ -49,11 +56,23 @@ public class MagiaController {
     @GetMapping("/fila")
     public ResponseEntity tratarClasseAssincrona(){
         if(!requisicoesAssincronas.isEmpty()){
-            return ResponseEntity.status(200).body(repositoryTipoMagia.findById(requisicoesAssincronas.poll().getIdClasse()));
+            ResultadoRequisicao resultado = new ResultadoRequisicao(
+                    requisicoesAssincronas.peek().getProtocolo(),
+                    repositoryTipoMagia.findById(requisicoesAssincronas.peek().getIdClasse()));
+            requisicoesTratadas.add(resultado);
+            repositoryTipoMagia.findById(requisicoesAssincronas.poll().getIdClasse());
+            return ResponseEntity.status(200).body("Solicitação " + resultado.getProtocolo() +
+                    " foi tratada");
         }
         else {
             return ResponseEntity.status(204).body("Não existem solicitações na fila!");
         }
+    }
+
+    @GetMapping("/verificar-solicitacao/{id}")
+    public ResponseEntity devolverTratamentoAssincrono(@PathVariable Integer id){
+        return ResponseEntity.status(200).body(requisicoesTratadas.stream().filter(resultadoRequisicao ->
+                resultadoRequisicao.getProtocolo().equals(id)).collect(Collectors.toList()));
     }
 
     @PostMapping
