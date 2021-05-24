@@ -3,7 +3,6 @@ package br.com.bandtec.gabrielac3.controller;
 import br.com.bandtec.gabrielac3.FilaObj;
 import br.com.bandtec.gabrielac3.PilhaObj;
 import br.com.bandtec.gabrielac3.dominio.GetAssincrono;
-import br.com.bandtec.gabrielac3.dominio.RangedClasse;
 import br.com.bandtec.gabrielac3.dominio.ResultadoRequisicao;
 import br.com.bandtec.gabrielac3.dominio.TipoMagia;
 import br.com.bandtec.gabrielac3.repository.TipoMagiaRepository;
@@ -27,13 +26,15 @@ public class MagiaController {
     private TipoMagiaRepository repositoryTipoMagia;
     private PilhaObj<TipoMagia> ultimoPost = new PilhaObj<>(99);
 
-    private PilhaObj<TipoMagia> ultimaAlteracao = new PilhaObj<>(99);
-
     private FilaObj<GetAssincrono> requisicoesAssincronas = new FilaObj(99);
 
     private List<ResultadoRequisicao> requisicoesTratadas = new ArrayList();
 
     private int protocolo = 0;
+
+    private boolean existeAlteracao = false;
+
+    private TipoMagia magiaAntiga = new TipoMagia();
 
     @GetMapping
     public ResponseEntity getTipoMagia(){
@@ -100,19 +101,25 @@ public class MagiaController {
     @PutMapping("/{id}")
     public ResponseEntity putTipoMagia(@PathVariable int id, @RequestBody TipoMagia alterarTipo){
         if(repositoryTipoMagia.existsById(id)){
+            magiaAntiga.setId(id);
+            magiaAntiga.setNome(repositoryTipoMagia.getById(id).getNome());
             alterarTipo.setId(id);
-            ultimaAlteracao.push(repositoryTipoMagia.getOne(id));
             repositoryTipoMagia.save(alterarTipo);
-            ultimaAlteracao.exibe();
+            existeAlteracao = true;
             return ResponseEntity.status(200).body("Tipo de magia alterado com sucesso!");
         }else {
             return ResponseEntity.status(404).body("Tipo de magia não encontrado");
         }
     }
 
-    @GetMapping("/pilha")
-    public ResponseEntity getPilha(){
-        return ResponseEntity.status(200).body(ultimaAlteracao.peek().getNome());
+    @PutMapping("/desfazer-alteracao")
+    public ResponseEntity putDesfazerAlteracao(){
+        if(!existeAlteracao){
+            return ResponseEntity.status(404).body("nenhuma alteração realizada");
+        }else {
+            repositoryTipoMagia.save(magiaAntiga);
+            return ResponseEntity.status(201).body("Alteração desfeita!");
+        }
     }
 
     @PostMapping("/importar-tipo")

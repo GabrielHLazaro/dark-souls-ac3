@@ -7,21 +7,15 @@ import br.com.bandtec.gabrielac3.dominio.RangedClasse;
 import br.com.bandtec.gabrielac3.dominio.ResultadoRequisicao;
 import br.com.bandtec.gabrielac3.dominio.TipoMagia;
 import br.com.bandtec.gabrielac3.repository.RangedClasseRepository;
-import br.com.bandtec.gabrielac3.repository.TipoMagiaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import javax.persistence.ManyToOne;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.PositiveOrZero;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,11 +27,13 @@ public class ClasseController {
 
     private PilhaObj<RangedClasse> ultimoPost = new PilhaObj<>(99);
 
-    private PilhaObj<RangedClasse> ultimaAlteracao = new PilhaObj<>(99);
-
     private FilaObj<GetAssincrono> requisicoesAssincronas = new FilaObj(99);
 
     private List<ResultadoRequisicao> requisicoesTratadas = new ArrayList();
+
+    private RangedClasse classeAntiga = new RangedClasse();
+
+    private boolean existeAlteracao = false;
 
     private int protocolo = 0;
 
@@ -103,27 +99,35 @@ public class ClasseController {
         }
     }
 
-//    @PutMapping("/{id}")
-//    public ResponseEntity putClasse(@PathVariable int id, @RequestBody RangedClasse classeAlterada){
-//        Optional<RangedClasse> opicional = repositoryClasse.findById(id);
-//        if(opicional.isPresent()){
-//            RangedClasse classeParaAlterar = repositoryClasse.getOne(id);
-//            alteracaoClasse.push(classeParaAlterar);
-//            classeParaAlterar.setNome(classeAlterada.getNome());
-//            classeParaAlterar.setConhecimento(classeAlterada.getConhecimento());
-//            classeParaAlterar.setInteligencia(classeAlterada.getInteligencia());
-//            classeParaAlterar.setFe(classeAlterada.getFe());
-//            classeParaAlterar.setCanalizador(classeAlterada.getCanalizador());
-//            classeParaAlterar.setTipoMagia(classeAlterada.getTipo());
-//            classeParaAlterar.setSoulLevel(classeAlterada.getSoulLevel());
-//            repositoryClasse.save();
-//        }
-//    }
+    @PutMapping("/{id}")
+    public ResponseEntity putClasse(@PathVariable int id, @RequestBody RangedClasse alterarClasse){
+        if(repositoryClasse.existsById(id)){
+            classeAntiga.setId(id);
+            classeAntiga.setNome(repositoryClasse.getById(id).getNome());
+            classeAntiga.setConhecimento(repositoryClasse.getById(id).getConhecimento());
+            classeAntiga.setInteligencia(repositoryClasse.getById(id).getInteligencia());
+            classeAntiga.setFe(repositoryClasse.getById(id).getFe());
+            classeAntiga.setCanalizador(repositoryClasse.getById(id).getCanalizador());
+            classeAntiga.setTipoMagia(repositoryClasse.getById(id).getTipo());
+            classeAntiga.setSoulLevel(repositoryClasse.getById(id).getSoulLevel());
+            alterarClasse.setId(id);
+            repositoryClasse.save(alterarClasse);
+            existeAlteracao = true;
+            return ResponseEntity.status(200).body("Tipo de magia alterado com sucesso!");
+        }else {
+            return ResponseEntity.status(404).body("Tipo de magia não encontrado");
+        }
+    }
 
-//    @PutMapping("/desfazer-alteracao")
-//    public ResponseEntity desfazerPutClasse(){
-//
-//    }
+    @PutMapping("/desfazer-alteracao")
+    public ResponseEntity putDesfazerAlteracao(){
+        if(!existeAlteracao){
+            return ResponseEntity.status(404).body("nenhuma alteração realizada");
+        }else {
+            repositoryClasse.save(classeAntiga);
+            return ResponseEntity.status(201).body("Alteração desfeita!");
+        }
+    }
 
     @PostMapping("/importar-classe")
     public ResponseEntity importarClasse(@RequestParam MultipartFile arquivo) throws IOException {
