@@ -36,8 +36,7 @@ public class ClasseController {
     private List<ResultadoRequisicao> requisicoesTratadas = new ArrayList();
 
     private RangedClasse classeAntiga = new RangedClasse();
-
-    private boolean existeAlteracao = false;
+    private PilhaObj<RangedClasse> ultimoPut = new PilhaObj(99);
 
     private int protocolo = 0;
 
@@ -116,7 +115,6 @@ public class ClasseController {
             classeAntiga.setSoulLevel(repositoryClasse.getById(id).getSoulLevel());
             alterarClasse.setId(id);
             repositoryClasse.save(alterarClasse);
-            existeAlteracao = true;
             return ResponseEntity.status(200).body("Tipo de magia alterado com sucesso!");
         }else {
             return ResponseEntity.status(404).body("Tipo de magia não encontrado");
@@ -125,7 +123,7 @@ public class ClasseController {
 
     @PutMapping("/desfazer-alteracao")
     public ResponseEntity putDesfazerAlteracao(){
-        if(!existeAlteracao){
+        if(ultimoPut.isEmpty()){
             return ResponseEntity.status(404).body("nenhuma alteração realizada");
         }else {
             repositoryClasse.save(classeAntiga);

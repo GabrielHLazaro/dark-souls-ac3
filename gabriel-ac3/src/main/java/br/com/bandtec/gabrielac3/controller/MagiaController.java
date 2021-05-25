@@ -32,9 +32,8 @@ public class MagiaController {
 
     private int protocolo = 0;
 
-    private boolean existeAlteracao = false;
-
     private TipoMagia magiaAntiga = new TipoMagia();
+    private PilhaObj<TipoMagia> ultimoPut = new PilhaObj(99);
 
     @GetMapping
     public ResponseEntity getTipoMagia(){
@@ -103,9 +102,9 @@ public class MagiaController {
         if(repositoryTipoMagia.existsById(id)){
             magiaAntiga.setId(id);
             magiaAntiga.setNome(repositoryTipoMagia.getById(id).getNome());
+            ultimoPut.push(magiaAntiga);
             alterarTipo.setId(id);
             repositoryTipoMagia.save(alterarTipo);
-            existeAlteracao = true;
             return ResponseEntity.status(200).body("Tipo de magia alterado com sucesso!");
         }else {
             return ResponseEntity.status(404).body("Tipo de magia não encontrado");
@@ -114,10 +113,10 @@ public class MagiaController {
 
     @PutMapping("/desfazer-alteracao")
     public ResponseEntity putDesfazerAlteracao(){
-        if(!existeAlteracao){
+        if(ultimoPut.isEmpty()){
             return ResponseEntity.status(404).body("nenhuma alteração realizada");
         }else {
-            repositoryTipoMagia.save(magiaAntiga);
+            repositoryTipoMagia.save(ultimoPut.pop());
             return ResponseEntity.status(201).body("Alteração desfeita!");
         }
     }
