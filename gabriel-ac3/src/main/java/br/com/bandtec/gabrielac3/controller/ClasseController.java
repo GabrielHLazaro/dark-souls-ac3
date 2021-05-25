@@ -66,7 +66,7 @@ public class ClasseController {
             return ResponseEntity.status(200).body("Solicitação adicionada na fila! " +
                     "Use /fila para tratar as solicitações. O protocolo é: " + protocolo);
         }else {
-            return ResponseEntity.status(204).build();
+            return ResponseEntity.status(404).body("Não existe não existe a Classe informada");
         }
     }
 
@@ -95,7 +95,7 @@ public class ClasseController {
     @DeleteMapping
     public ResponseEntity desfazerPostClasse(){
         if(ultimoPost.isEmpty()){
-            return ResponseEntity.status(404).body("Desculpe, classe não encontrada!");
+            return ResponseEntity.status(204).build();
         }
         else{
             repositoryClasse.deleteById(ultimoPost.pop().getId());
@@ -204,6 +204,7 @@ public class ClasseController {
                     novaClasse.setSoulLevel(soulLevel);
                     contRegistro++;
                     repositoryClasse.save(novaClasse);
+                    ultimoPost.push(novaClasse);
                 }
                 else if (tipoRegistro.equals("03")){
                     contRegistro++;

@@ -54,7 +54,7 @@ public class MagiaController {
             return ResponseEntity.status(200).body("Solicitação adicionada na fila! " +
                     "Use /fila para tratar as solicitações. O protocolo é: " + protocolo);
         }else {
-            return ResponseEntity.status(204).build();
+            return ResponseEntity.status(404).body("Não existe não existe o tipo de magia informado");
         }
     }
 
@@ -90,7 +90,7 @@ public class MagiaController {
     @DeleteMapping
     public ResponseEntity deleteTipoMagia(){
         if(ultimoPost.isEmpty()){
-            return ResponseEntity.status(404).body("Desculpe, tipo de magia não encontrado!");
+            return ResponseEntity.status(204).body("Você não inseriu nenhum tipo de magia");
         }
         else{
             repositoryTipoMagia.deleteById(ultimoPost.pop().getId());
@@ -172,6 +172,7 @@ public class MagiaController {
                     novoTipo.setNome(nome);
                     contRegistro++;
                     repositoryTipoMagia.save(novoTipo);
+                    ultimoPost.push(novoTipo);
                 }
                 else if (tipoRegistro.equals("02")){
                     contRegistro++;
