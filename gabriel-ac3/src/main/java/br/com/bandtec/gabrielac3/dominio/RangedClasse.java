@@ -1,6 +1,7 @@
 package br.com.bandtec.gabrielac3.dominio;
 
 import javax.persistence.*;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
@@ -16,16 +17,16 @@ public class RangedClasse {
     @Column(length = 10)
     private String nome;
 
-    @PositiveOrZero
-    @Size(max = 99)
+    @PositiveOrZero()
+    @Max(99)
     private Integer conhecimento;
 
     @PositiveOrZero
-    @Size(max = 99)
+    @Max(99)
     private Integer inteligencia;
 
     @PositiveOrZero
-    @Size(max = 99)
+    @Max(99)
     private Integer fe;
 
     @NotBlank

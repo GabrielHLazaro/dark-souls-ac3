@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -80,7 +81,7 @@ public class MagiaController {
     }
 
     @PostMapping
-    public ResponseEntity postTipoMagia(@RequestBody TipoMagia novoTipo){
+    public ResponseEntity postTipoMagia(@RequestBody @Valid TipoMagia novoTipo){
         repositoryTipoMagia.save(novoTipo);
         ultimoPost.push(novoTipo);
         return ResponseEntity.status(201).build();

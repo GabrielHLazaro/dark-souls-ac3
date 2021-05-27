@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.validation.Valid;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -51,7 +53,7 @@ public class ClasseController {
     }
 
     @PostMapping
-    public ResponseEntity postClasse(@RequestBody RangedClasse novaClasse){
+    public ResponseEntity postClasse(@RequestBody @Valid RangedClasse novaClasse){
         repositoryClasse.save(novaClasse);
         ultimoPost.push(novaClasse);
         return ResponseEntity.status(201).build();
@@ -201,7 +203,11 @@ public class ClasseController {
                     novaClasse.setTipoMagia(repositoryTipo.getById(tipo));
                     novaClasse.setSoulLevel(soulLevel);
                     contRegistro++;
-                    repositoryClasse.save(novaClasse);
+                    try {
+                        repositoryClasse.save(novaClasse);
+                    } catch (Exception e){
+                        return ResponseEntity.status(400).body("Erro ao salvar Classe: " + e.getMessage());
+                    }
                     ultimoPost.push(novaClasse);
                 }
                 else if (tipoRegistro.equals("03")){
